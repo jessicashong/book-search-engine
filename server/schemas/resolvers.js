@@ -31,11 +31,28 @@ const resolvers = {
             const token = signToken(user);
             return{ token, user };
         },
-        saveBook: async(parent, { input }, context) => {
-
+        saveBook: async(parent, { book }, context) => {
+            if(context.user){
+                const userBooks = await User.findOneAndUpdate(
+                    { _id: context.user._id },
+                    { $addToSet: { savedBooks: book } },
+                    { new: true }
+                )
+                return userBooks;
+            }
         },
         removeBook: async(parent, { bookId }, context) => {
-            
+            if(context.user){
+                const userBooks = await User.findOneAndUpdate(
+                    { _id: context.user._id },
+                    { $pull: { savedBooks: { bookId: bookId } } },
+                    { new: true }
+                );
+                return userBooks;
+            }
+            throw new AuthenticationError('You need to be logged in.');
         },
     },
 };
+
+module.exports = resolvers;
