@@ -24,7 +24,18 @@ const SearchBooks = () => {
   // create state to hold saved bookId values
   const [savedBookIds, setSavedBookIds] = useState(getSavedBookIds());
 
-  const [saveBook] = useMutation(SAVE_BOOK);
+  const [saveBook, { error }] = useMutation(SAVE_BOOK, {
+    update(cache, { data: { saveBook } }){
+      try{
+        cache.writeQuery({ 
+          query: QUERY_ME ,
+          data: { me: { ...me, savedBooks: [...me.savedBooks, bookToSave] } },
+        });
+      }catch(err){
+        console.error(err);
+      }
+    }
+  });
 
   // set up useEffect hook to save `savedBookIds` list to localStorage on component unmount
   // learn more here: https://reactjs.org/docs/hooks-effect.html#effects-with-cleanup
@@ -77,16 +88,9 @@ const SearchBooks = () => {
     }
 
     try {
-      await saveBook({
-        variables: {book: bookToSave},
-        update: cache => {
-          const { me } = cache.readQuery({ query: QUERY_ME });
-          cache.writeQuery({ 
-            query: QUERY_ME ,
-            data: { me: { ...me, savedBooks: [...me.savedBooks, bookToSave] } },
-          });
-        },
-      });
+      const { data } = await saveBook({
+        variables: { book:  }
+      })
 
       // if book successfully saves to user's account, save book id to state
       setSavedBookIds([...savedBookIds, bookToSave.bookId]);
@@ -101,7 +105,7 @@ const SearchBooks = () => {
         <Container>
           <h1>Search for Books!</h1>
           <Form onSubmit={handleFormSubmit}>
-            <Form>
+            {/* <Form> */}
               <Col xs={12} md={8}>
                 <Form.Control
                   name='searchInput'
@@ -117,7 +121,7 @@ const SearchBooks = () => {
                   Submit Search
                 </Button>
               </Col>
-            </Form>
+            {/* </Form> */}
           </Form>
         </Container>
       </div>
