@@ -9,6 +9,7 @@ import {
 
 // import { getMe, deleteBook } from '../utils/API';
 import { useQuery, useMutation } from '@apollo/client';
+import { useParams } from 'react-router-dom';
 import { QUERY_ME } from '../utils/queries';
 import { REMOVE_BOOK } from '../utils/mutations';
 import Auth from '../utils/auth';
@@ -16,8 +17,11 @@ import { removeBookId } from '../utils/localStorage';
 
 const SavedBooks = () => {
   // const [userData, setUserData] = useState({});
-  const { loading, data } = useQuery(QUERY_ME);
-  const userData = data?.me || [];
+  const { _id } = useParams();
+  const { loading, data } = useQuery(QUERY_ME, {
+    variables: { me: _id },
+  });
+  const userData = data?.me || {};
   const [removeBook, { error }] = useMutation(REMOVE_BOOK, {
     update(cache, { data: { removeBook } }){
       try {
@@ -71,6 +75,18 @@ const SavedBooks = () => {
     try {
       const { data } = await removeBook({
         variables: { bookId },
+
+        update: cache => {
+          const data = cache.readQuery({ query: QUERY_ME });
+          const userDataCache = data.me;
+          const savedBooksCache = userDataCache.savedBooks;
+          const updatedBookCache = savedBooksCache.filter((book) => book.bookId !==bookId);
+          data.me.savedBooks = updatedBookCache;
+          cache.writeQuery({ 
+            query: QUERY_ME, 
+            data: { data: { ...data.me.savedBooks }}
+          })
+        }
       });
       // const updatedUser = await response.json();
       // setUserData(updatedUser);

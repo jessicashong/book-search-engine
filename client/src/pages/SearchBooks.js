@@ -11,8 +11,10 @@ import {
 import Auth from '../utils/auth';
 import { searchGoogleBooks } from '../utils/API';
 import { useMutation } from '@apollo/client';
+// import { useParams } from 'react-router-dom';
+
 import { SAVE_BOOK } from '../utils/mutations';
-import { QUERY_ME } from '../utils/queries';
+// import { QUERY_ME } from '../utils/queries';
 import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
 
 const SearchBooks = () => {
@@ -20,22 +22,10 @@ const SearchBooks = () => {
   const [searchedBooks, setSearchedBooks] = useState([]);
   // create state for holding our search field data
   const [searchInput, setSearchInput] = useState('');
-
   // create state to hold saved bookId values
   const [savedBookIds, setSavedBookIds] = useState(getSavedBookIds());
-
-  const [saveBook, { error }] = useMutation(SAVE_BOOK, {
-    update(cache, { data: { saveBook } }){
-      try{
-        cache.writeQuery({ 
-          query: QUERY_ME ,
-          data: { me: { ...me, savedBooks: [...me.savedBooks, bookToSave] } },
-        });
-      }catch(err){
-        console.error(err);
-      }
-    }
-  });
+  // const { bookId } = useParams();
+  const [saveBook, { error }] = useMutation(SAVE_BOOK);
 
   // set up useEffect hook to save `savedBookIds` list to localStorage on component unmount
   // learn more here: https://reactjs.org/docs/hooks-effect.html#effects-with-cleanup
@@ -89,7 +79,7 @@ const SearchBooks = () => {
 
     try {
       const { data } = await saveBook({
-        variables: { book:  }
+        variables: { bookId },
       })
 
       // if book successfully saves to user's account, save book id to state
